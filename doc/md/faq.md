@@ -38,18 +38,31 @@ For example, in order to generate a method for each of the create-builders, that
 use the following template:
 
 ```gotemplate
+{{ define "set" }}
+
+{{/* Add the base header for the generated file */}}
+{{ $pkg := base $.Config.Package }}
+{{ template "header" $ }}
 {{ range $n := $.Nodes }}
     {{ $builder := $n.CreateName }}
     {{ $receiver := receiver $builder }}
 
     func ({{ $receiver }} *{{ $builder }}) Set{{ $n.Name }}(input *{{ $n.Name }}) *{{ $builder }} {
         {{- range $f := $n.Fields }}
-            {{- $setter := print "Set" $f.StructField }}
-            {{ $receiver }}.{{ $setter }}(input.{{ $f.StructField }})
+            {{- if $f.Nillable }}
+                {{ $receiver }}.{{ print "SetNillable" $f.StructField }}(input.{{ $f.StructField }})
+            {{- else }}
+                {{ $receiver }}.{{ print "Set" $f.StructField }}(input.{{ $f.StructField }})
+            {{- end }}
+            
         {{- end }}
         return {{ $receiver }}
     }
 {{ end }}
+
+
+{{ end }}
+
 ```
 
 #### How to create a mutation level validator?
